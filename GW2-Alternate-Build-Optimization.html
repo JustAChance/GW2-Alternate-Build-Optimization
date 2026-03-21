@@ -1,0 +1,824 @@
+<!--
+  GW2 Alternate Build Optimization
+
+  This tool may be used for personal, non-commercial purposes only.
+  Redistribution, modification, or use in any commercial product or service
+  is strictly prohibited without the express written consent of the author.
+
+  DISCLAIMER: This tool is provided "as is", without warranty of any kind,
+  express or implied. The author shall not be held liable for any direct,
+  indirect, incidental, or consequential damages arising from the use or
+  misuse of this tool, including but not limited to any illicit, unlawful,
+  or unauthorised use by third parties. Use of this tool constitutes
+  acceptance of these terms.
+
+  Acknowledgements:
+  Stat values sourced from https://wiki.guildwars2.com/wiki/Attribute_combinations
+  Guild Wars 2 is a registered trademark of ArenaNet, LLC. This tool is an unofficial fan project and is not affiliated with or endorsed by ArenaNet or NCSoft
+
+  Contact: JustAChance https://github.com/JustAChance/
+
+
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GW2 Alternate Build Optimization</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Roboto+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0c0b;--bg2:#141210;--bg3:#1c1916;--bg4:#242018;--bg5:#2e2a24;
+  --border:#3a3330;--border2:#524840;
+  --gold:#c9a84c;--gold2:#e8c97a;
+  --cream:#e8dcc8;--muted:#8a7d6e;--muted2:#5c524a;
+  --pow:#e8593c;--prec:#4ec87a;--vit:#5b9bd5;--fer:#b87ef0;
+  --tough:#d4934a;--cond:#d4724a;--heal:#5ec4e8;--conc:#c8c45c;--exp:#9a7ad4;
+  --good:#4ec87a;--warn:#c9a84c;--over:#d4724a;--under:#5b9bd5;--bad:#e05050;
+  --r:6px;--r2:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--cream);font-family:'Source Sans 3',sans-serif;font-size:14px;line-height:1.5;}
+.hero{padding:16px 24px 12px;border-bottom:1px solid var(--border);background:var(--bg2);}
+.hero-title{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--gold2);letter-spacing:.05em;margin-bottom:4px;}
+.hero-desc{font-size:11px;color:var(--muted);line-height:1.6;max-width:900px;}
+.hero-steps{display:flex;flex-wrap:wrap;gap:5px 18px;margin-top:6px;}
+.hero-step{font-size:10px;color:var(--muted2);display:flex;align-items:center;gap:5px;}
+.hero-step-num{font-family:'Cinzel',serif;font-size:9px;color:var(--gold);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.layout{display:grid;grid-template-columns:1fr 1fr 390px;min-height:calc(100vh - 100px);}
+.col{padding:20px 16px 60px;overflow-y:auto;max-height:calc(100vh - 100px);}
+.col-current{border-right:1px solid var(--border);}
+.col-target{border-right:1px solid var(--border);background:var(--bg2);}
+.col-results{background:var(--bg2);}
+.col-header{margin-bottom:18px;}
+.col-title{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:var(--gold2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;}
+.col-sub{font-size:10px;color:var(--muted);font-weight:300;}
+.section{margin-bottom:14px;}
+.section-header{display:flex;align-items:center;gap:6px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.section-title{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.13em;color:var(--muted);text-transform:uppercase;}
+.section-gap{flex:1;}
+.group-btns{display:flex;gap:3px;flex-wrap:wrap;}
+.gbtn{font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;font-family:'Source Sans 3',sans-serif;transition:all .15s;white-space:nowrap;}
+.gbtn:hover{background:var(--bg5);color:var(--cream);}
+.gbtn.gold{border-color:rgba(201,168,76,.3);color:var(--gold);}
+.gbtn.gold:hover{background:rgba(201,168,76,.1);}
+.rarity-btns{display:flex;border:1px solid var(--border2);border-radius:4px;overflow:hidden;}
+.rbtn{font-size:9px;padding:2px 8px;background:transparent;color:var(--muted);border:none;cursor:pointer;font-family:'Source Sans 3',sans-serif;transition:all .15s;white-space:nowrap;}
+.rbtn+.rbtn{border-left:1px solid var(--border2);}
+.rbtn.active{background:rgba(201,168,76,.12);color:var(--gold);}
+.rbtn:hover:not(.active){background:var(--bg5);color:var(--cream);}
+.rar-btns{display:flex;border:1px solid var(--border2);border-radius:3px;overflow:hidden;margin-bottom:5px;}
+.rar-btn{flex:1;font-size:8px;padding:2px 0;background:transparent;color:var(--muted2);border:none;cursor:pointer;font-family:'Roboto Mono',monospace;letter-spacing:.04em;transition:all .15s;text-align:center;}
+.rar-btn+.rar-btn{border-left:1px solid var(--border2);}
+.rar-btn.active{background:rgba(201,168,76,.12);color:var(--gold);}
+.rar-btn:hover:not(.active){background:var(--bg5);color:var(--cream);}
+.hand-btns{display:flex;border:1px solid var(--border2);border-radius:3px;overflow:hidden;margin-bottom:5px;}
+.hbtn{flex:1;font-size:9px;padding:2px 4px;background:transparent;color:var(--muted);border:none;cursor:pointer;font-family:'Roboto Mono',monospace;transition:all .15s;text-align:center;}
+.hbtn+.hbtn{border-left:1px solid var(--border2);}
+.hbtn.active{background:rgba(91,155,213,.12);color:var(--vit);}
+.hbtn:hover:not(.active){background:var(--bg5);color:var(--cream);}
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.slot-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:8px 9px;transition:border-color .2s,opacity .2s;}
+.slot-card:hover{border-color:var(--border2);}
+.slot-card.is-locked{opacity:.45;}
+.card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.slot-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.07em;color:var(--gold);}
+.lock-wrap{display:flex;align-items:center;gap:3px;cursor:pointer;}
+.lock-wrap input{display:none;}
+.lock-track{width:24px;height:13px;background:var(--bg5);border:1px solid var(--border2);border-radius:7px;position:relative;transition:background .2s,border-color .2s;}
+.lock-thumb{position:absolute;top:2px;left:2px;width:7px;height:7px;background:var(--muted);border-radius:50%;transition:transform .2s,background .2s;}
+.lock-wrap input:checked+.lock-track{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.5);}
+.lock-wrap input:checked+.lock-track .lock-thumb{transform:translateX(11px);background:var(--gold);}
+.lock-text{font-size:9px;color:var(--muted);min-width:28px;}
+.lock-wrap input:checked~.lock-text{color:var(--gold);}
+.slot-select{width:100%;background:var(--bg4);color:var(--cream);border:1px solid var(--border2);border-radius:4px;padding:4px 22px 4px 6px;font-size:10px;font-family:'Source Sans 3',sans-serif;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M1 1l3 3 3-3' stroke='%238a7d6e' stroke-width='1.3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center;cursor:pointer;margin-bottom:5px;transition:border-color .2s;}
+.slot-select:focus{outline:none;border-color:var(--gold);}
+.col-target .slot-select{background:var(--bg5);border-color:rgba(201,168,76,.2);}
+.col-target .slot-card{background:rgba(201,168,76,.03);border-color:rgba(201,168,76,.15);}
+.col-target .slot-card:hover{border-color:rgba(201,168,76,.3);}
+.stat-pills{display:flex;flex-wrap:wrap;gap:2px;min-height:16px;}
+.pill{font-family:'Roboto Mono',monospace;font-size:8px;font-weight:500;padding:1px 3px;border-radius:2px;white-space:nowrap;}
+.pill.pow {background:rgba(232,89,60,.13); color:var(--pow); border:1px solid rgba(232,89,60,.26);}
+.pill.prec{background:rgba(78,200,122,.11);color:var(--prec);border:1px solid rgba(78,200,122,.22);}
+.pill.vit {background:rgba(91,155,213,.13);color:var(--vit); border:1px solid rgba(91,155,213,.26);}
+.pill.fer {background:rgba(184,126,240,.11);color:var(--fer);border:1px solid rgba(184,126,240,.22);}
+.pill.tough{background:rgba(212,147,74,.11);color:var(--tough);border:1px solid rgba(212,147,74,.22);}
+.pill.cond{background:rgba(212,114,74,.11);color:var(--cond);border:1px solid rgba(212,114,74,.22);}
+.pill.heal{background:rgba(94,196,232,.11);color:var(--heal);border:1px solid rgba(94,196,232,.22);}
+.pill.conc{background:rgba(200,196,92,.11);color:var(--conc);border:1px solid rgba(200,196,92,.22);}
+.pill.exp {background:rgba(154,122,212,.11);color:var(--exp);border:1px solid rgba(154,122,212,.22);}
+.pill.none{color:var(--muted2);border:1px solid var(--border);background:transparent;font-size:8px;font-family:'Source Sans 3',sans-serif;}
+.panel-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px;margin-bottom:10px;}
+.panel-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.11em;color:var(--muted);text-transform:uppercase;margin-bottom:9px;}
+.score-row{display:flex;align-items:baseline;gap:8px;margin-bottom:2px;}
+.score-num{font-family:'Roboto Mono',monospace;font-size:36px;font-weight:500;line-height:1;transition:color .3s;}
+.score-unit{font-size:11px;color:var(--muted);}
+.score-grade{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.04em;padding:3px 9px;border-radius:3px;margin-left:auto;}
+.comp-table{width:100%;border-collapse:collapse;font-size:10px;}
+.comp-table th{font-family:'Cinzel',serif;font-size:8px;letter-spacing:.09em;color:var(--muted);font-weight:400;padding:4px 4px 6px;text-align:right;border-bottom:1px solid var(--border);}
+.comp-table th:first-child{text-align:left;}
+.comp-table td{padding:5px 4px;border-bottom:1px solid rgba(58,51,48,.4);vertical-align:middle;}
+.comp-table tr:last-child td{border-bottom:none;}
+.stat-name-cell{display:flex;align-items:center;gap:4px;}
+.stat-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.stat-nm{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.04em;color:var(--cream);}
+.mono{font-family:'Roboto Mono',monospace;font-size:10px;text-align:right;color:var(--muted);}
+.mono.bright{color:var(--cream);font-weight:500;}
+.dev{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:500;text-align:right;}
+.bar-td{width:42px;padding-left:4px;}
+.bar-bg{height:4px;background:var(--bg5);border-radius:2px;overflow:hidden;}
+.bar-fg{height:100%;border-radius:2px;transition:width .35s ease;}
+.tol-td{width:14px;text-align:center;padding-left:2px;}
+.tol-mark{font-size:10px;font-weight:700;line-height:1;}
+.tol-grid{display:flex;flex-direction:column;gap:5px;}
+.tol-row{display:grid;grid-template-columns:70px 1fr 14px 1fr 18px;gap:3px;align-items:center;}
+.tol-stat{display:flex;align-items:center;gap:4px;}
+.tol-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.tol-name{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.04em;color:var(--cream);}
+.tol-wrap{position:relative;display:flex;align-items:center;}
+.tol-input{width:100%;background:var(--bg4);color:var(--cream);border:1px solid var(--border2);border-radius:4px;padding:3px 18px 3px 4px;font-size:10px;font-family:'Roboto Mono',monospace;text-align:right;transition:border-color .2s,background .2s;}
+.tol-input:focus{outline:none;border-color:var(--gold);}
+.tol-input.set{border-color:rgba(201,168,76,.45);background:rgba(201,168,76,.06);color:var(--gold2);}
+.tol-pct{position:absolute;right:4px;font-size:9px;color:var(--muted2);pointer-events:none;font-family:'Roboto Mono',monospace;}
+.tol-input.set+.tol-pct{color:var(--gold);}
+.tol-sep{font-size:9px;color:var(--muted2);text-align:center;}
+.tol-status-dot{width:7px;height:7px;border-radius:50%;margin:0 auto;}
+.tol-col-heads{display:grid;grid-template-columns:70px 1fr 14px 1fr 18px;gap:3px;margin-bottom:5px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.tol-col-heads span{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.07em;color:var(--muted2);text-align:center;}
+.tol-col-heads span:first-child{text-align:left;}
+.tol-empty{font-size:10px;color:var(--muted2);font-style:italic;}
+.tol-hint{font-size:9px;color:var(--muted2);line-height:1.6;margin-top:8px;}
+.filter-info{font-size:10px;margin-bottom:7px;padding:4px 7px;border-radius:4px;}
+.filter-info.ok  {background:rgba(78,200,122,.08);color:var(--good);border:1px solid rgba(78,200,122,.2);}
+.filter-info.bad {background:rgba(224,80,80,.08); color:var(--bad); border:1px solid rgba(224,80,80,.18);}
+.filter-info.none{background:var(--bg5);color:var(--muted);border:1px solid var(--border2);}
+.find-btn{width:100%;padding:8px;background:rgba(201,168,76,.08);color:var(--gold);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);font-family:'Source Sans 3',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
+.find-btn:hover{background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.4);}
+.find-btn:disabled{opacity:.35;cursor:default;}
+.best-status{font-size:10px;color:var(--muted);font-style:italic;padding:10px 0;text-align:center;}
+.combo-row{display:grid;grid-template-columns:16px 1fr 48px;gap:5px;align-items:start;padding:5px 4px;border-radius:4px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border);font-size:9px;}
+.combo-row:last-child{border-bottom:none;}
+.combo-row:hover{background:var(--bg4);}
+.combo-rank{font-family:'Roboto Mono',monospace;font-size:9px;color:var(--muted2);padding-top:2px;}
+.combo-names{display:flex;flex-wrap:wrap;gap:2px;}
+.combo-tag{font-size:9px;background:var(--bg5);border:1px solid var(--border2);border-radius:2px;padding:1px 4px;color:var(--muted);white-space:nowrap;}
+.combo-tag.free{border-color:rgba(201,168,76,.3);color:var(--gold);}
+.combo-score{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:500;text-align:right;padding-top:2px;}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+@media(max-width:1100px){.layout{grid-template-columns:1fr 1fr;}.col-results{grid-column:1/-1;max-height:none;border-top:1px solid var(--border);}}
+@media(max-width:660px){.layout{grid-template-columns:1fr;}.col-current,.col-target{border-right:none;border-bottom:1px solid var(--border);max-height:none;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-title">GW2 Alternate Build Optimization</div>
+  <div class="hero-desc">Compare ascended or exotic gear prefix combinations across armor, trinkets, and weapons against a custom target build, analyse per-stat deviations, and automatically find the optimal prefixes for free slots.</div>
+  <div class="hero-steps">
+    <div class="hero-step"><div class="hero-step-num">1</div>Set <strong style="color:var(--cream)">Current Build</strong> — choose rarity (Asc/Exo), hand type (1H/2H), prefix, and lock status per slot</div>
+    <div class="hero-step"><div class="hero-step-num">2</div>Set <strong style="color:var(--gold)">Target Build</strong> — the stat profile you want to achieve</div>
+    <div class="hero-step"><div class="hero-step-num">3</div>Review <strong style="color:var(--cream)">Analysis</strong> — set tolerance ranges, then compute the optimal free-slot prefixes</div>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- COL 1: CURRENT BUILD -->
+<div class="col col-current">
+  <div class="col-header">
+    <div class="col-title">Current Build</div>
+    <div class="col-sub">
+      Your equipped prefixes · lock = excluded from Find Best ·
+      <select id="current-preset" onchange="applyCurrentPreset(this.value)" style="background:transparent;border:none;color:var(--gold2);font-size:10px;cursor:pointer;font-family:'Source Sans 3',sans-serif;appearance:none;padding-right:12px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%225%22 viewBox=%220 0 8 5%22%3E%3Cpath d=%22M1 1l3 3 3-3%22 stroke=%22%23e8c97a%22 stroke-width=%221.2%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 0 center;outline:none;">
+        <option value="">set all to…</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Armor</span>
+      <div class="section-gap"></div>
+      <div class="group-btns">
+        <button class="gbtn" onclick="lockGroup('armor',true)">Lock all</button>
+        <button class="gbtn" onclick="lockGroup('armor',false)">Unlock all</button>
+      </div>
+    </div>
+    <div class="slots-grid" id="cur-grid-armor"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Trinkets</span>
+      <div class="section-gap"></div>
+      <div class="group-btns">
+        <button class="gbtn" onclick="lockGroup('trinkets',true)">Lock all</button>
+        <button class="gbtn" onclick="lockGroup('trinkets',false)">Unlock all</button>
+      </div>
+    </div>
+    <div class="slots-grid" id="cur-grid-trinkets"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Weapons</span>
+      <div class="section-gap"></div>
+      <div class="group-btns">
+        <button class="gbtn" onclick="lockGroup('weapons',true)">Lock all</button>
+        <button class="gbtn" onclick="lockGroup('weapons',false)">Unlock all</button>
+      </div>
+    </div>
+    <div class="slots-grid" id="cur-grid-weapons"></div>
+  </div>
+</div>
+
+<!-- COL 2: TARGET BUILD -->
+<div class="col col-target">
+  <div class="col-header">
+    <div class="col-title" style="color:var(--gold)">Target Build</div>
+    <div class="col-sub">
+      Desired prefix per piece ·
+      <select id="target-preset" onchange="applyTargetPreset(this.value)" style="background:transparent;border:none;color:var(--gold);font-size:10px;cursor:pointer;font-family:'Source Sans 3',sans-serif;appearance:none;padding-right:12px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%228%22 height=%225%22 viewBox=%220 0 8 5%22%3E%3Cpath d=%22M1 1l3 3 3-3%22 stroke=%22%23c9a84c%22 stroke-width=%221.2%22 fill=%22none%22 stroke-linecap=%22round%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 0 center;outline:none;">
+        <option value="">set all to…</option>
+      </select>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Armor</span>
+      <div class="section-gap"></div>
+      <button class="gbtn gold" onclick="copyGroupToTarget('armor')">Copy from current</button>
+    </div>
+    <div class="slots-grid" id="tgt-grid-armor"></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Trinkets</span>
+      <div class="section-gap"></div>
+      <button class="gbtn gold" onclick="copyGroupToTarget('trinkets')">Copy from current</button>
+    </div>
+    <div class="slots-grid" id="tgt-grid-trinkets"></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Weapons</span>
+      <div class="section-gap"></div>
+      <button class="gbtn gold" onclick="copyGroupToTarget('weapons')">Copy from current</button>
+    </div>
+    <div class="slots-grid" id="tgt-grid-weapons"></div>
+  </div>
+</div>
+
+<!-- COL 3: ANALYSIS -->
+<div class="col col-results">
+  <div class="col-header">
+    <div class="col-title" style="color:var(--cream)">Analysis</div>
+    <div class="col-sub">Deviation from target · tolerances · optimize free slots</div>
+  </div>
+
+  <div class="panel-block">
+    <div class="panel-label">Deviation score</div>
+    <div class="score-row">
+      <span class="score-num" id="score-num">—</span>
+      <span class="score-unit">total</span>
+      <span class="score-grade" id="score-grade"></span>
+    </div>
+  </div>
+
+  <div class="panel-block">
+    <div class="panel-label">Stat breakdown</div>
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">Stat</th>
+          <th>Locked</th><th>Free</th><th>Total</th><th>Target</th><th>Dev</th>
+          <th class="bar-td"></th>
+          <th class="tol-td" title="Within tolerance">±</th>
+        </tr>
+      </thead>
+      <tbody id="comp-body"></tbody>
+    </table>
+  </div>
+
+  <div class="panel-block">
+    <div class="panel-label">Acceptable deviation ranges</div>
+    <div class="tol-col-heads">
+      <span>Stat</span><span>Min</span><span></span><span>Max</span><span></span>
+    </div>
+    <div class="tol-grid" id="tol-grid"></div>
+    <div class="tol-hint">
+      Min: how far <em>below</em> target is acceptable as a % (e.g. −5 = up to 5% under).<br>
+      Max: how far <em>above</em> target is acceptable as a % (e.g. +10 = up to 10% over).<br>
+      Leave blank = unconstrained in that direction.
+    </div>
+  </div>
+
+  <div class="panel-block">
+    <div class="panel-label">Find best combinations</div>
+    <div id="filter-status"></div>
+    <button class="find-btn" id="find-btn" onclick="findBest()">Compute optimal for free slots ↗</button>
+    <div id="best-results"></div>
+  </div>
+</div>
+
+</div>
+<script>
+const SLOTS={
+  chest:    {label:'Chest',    group:'armor',   type:'armor'},
+  legs:     {label:'Legs',     group:'armor',   type:'armor'},
+  head:     {label:'Head',     group:'armor',   type:'armor'},
+  shoulders:{label:'Shoulders',group:'armor',   type:'armor'},
+  gloves:   {label:'Gloves',   group:'armor',   type:'armor'},
+  boots:    {label:'Boots',    group:'armor',   type:'armor'},
+  amulet:   {label:'Amulet',   group:'trinkets',type:'trinket'},
+  ring1:    {label:'Ring 1',   group:'trinkets',type:'trinket'},
+  ring2:    {label:'Ring 2',   group:'trinkets',type:'trinket'},
+  acc1:     {label:'Acc. 1',   group:'trinkets',type:'trinket'},
+  acc2:     {label:'Acc. 2',   group:'trinkets',type:'trinket'},
+  back:     {label:'Back Item',group:'trinkets',type:'trinket'},
+  wep1:     {label:'Weapon 1', group:'weapons', type:'weapon'},
+  wep2:     {label:'Weapon 2', group:'weapons', type:'weapon'},
+  wep3:     {label:'Weapon 3', group:'weapons', type:'weapon'},
+  wep4:     {label:'Weapon 4', group:'weapons', type:'weapon'},
+};
+const SLOT_KEYS=Object.keys(SLOTS);
+
+// Stat values by slot key and rarity.
+// Ascended trinket values include the theoretical jewel contribution.
+// Exotic trinket values are base piece only — no jewel.
+// Weapon values are keyed by hand type (wep_1h / wep_2h).
+const STAT_VALUES={
+  chest:    {ascended:{n3:{maj:141,min:101},n4:{maj:121,min:67},n9:67}, exotic:{n3:{maj:134,min:96}, n4:{maj:115,min:63},n9:63}},
+  legs:     {ascended:{n3:{maj:94, min:67}, n4:{maj:81, min:44},n9:44}, exotic:{n3:{maj:90, min:64}, n4:{maj:77, min:42},n9:42}},
+  head:     {ascended:{n3:{maj:63, min:45}, n4:{maj:54, min:30},n9:30}, exotic:{n3:{maj:60, min:43}, n4:{maj:51, min:28},n9:28}},
+  shoulders:{ascended:{n3:{maj:47, min:34}, n4:{maj:40, min:22},n9:22}, exotic:{n3:{maj:45, min:32}, n4:{maj:38, min:21},n9:21}},
+  gloves:   {ascended:{n3:{maj:47, min:34}, n4:{maj:40, min:22},n9:22}, exotic:{n3:{maj:45, min:32}, n4:{maj:38, min:21},n9:21}},
+  boots:    {ascended:{n3:{maj:47, min:34}, n4:{maj:40, min:22},n9:22}, exotic:{n3:{maj:45, min:32}, n4:{maj:38, min:21},n9:21}},
+  amulet:   {ascended:{n3:{maj:157,min:108},n4:{maj:133,min:71},n9:72}, exotic:{n3:{maj:120,min:85}, n4:{maj:102,min:56},n9:56}},
+  ring1:    {ascended:{n3:{maj:126,min:85}, n4:{maj:106,min:56},n9:57}, exotic:{n3:{maj:90, min:64}, n4:{maj:77, min:42},n9:42}},
+  ring2:    {ascended:{n3:{maj:126,min:85}, n4:{maj:106,min:56},n9:57}, exotic:{n3:{maj:90, min:64}, n4:{maj:77, min:42},n9:42}},
+  acc1:     {ascended:{n3:{maj:110,min:74}, n4:{maj:92, min:49},n9:50}, exotic:{n3:{maj:75, min:53}, n4:{maj:64, min:35},n9:35}},
+  acc2:     {ascended:{n3:{maj:110,min:74}, n4:{maj:92, min:49},n9:50}, exotic:{n3:{maj:75, min:53}, n4:{maj:64, min:35},n9:35}},
+  back:     {ascended:{n3:{maj:63, min:40}, n4:{maj:52, min:27},n9:28}, exotic:{n3:{maj:30, min:21}, n4:{maj:26, min:14},n9:14}},
+  wep_1h:   {ascended:{n3:{maj:125,min:90}, n4:{maj:108,min:59},n9:59}, exotic:{n3:{maj:120,min:85}, n4:{maj:102,min:56},n9:56}},
+  wep_2h:   {ascended:{n3:{maj:251,min:179},n4:{maj:215,min:118},n9:118},exotic:{n3:{maj:239,min:171},n4:{maj:205,min:113},n9:113}},
+};
+
+const STAT_META={
+  Power:          {cls:'pow', color:'#e8593c',label:'Power'},
+  Precision:      {cls:'prec',color:'#4ec87a',label:'Precision'},
+  Vitality:       {cls:'vit', color:'#5b9bd5',label:'Vitality'},
+  Ferocity:       {cls:'fer', color:'#b87ef0',label:'Ferocity'},
+  Toughness:      {cls:'tough',color:'#d4934a',label:'Toughness'},
+  ConditionDamage:{cls:'cond',color:'#d4724a',label:'Cond. Dmg'},
+  HealingPower:   {cls:'heal',color:'#5ec4e8',label:'Heal. Pwr'},
+  Concentration:  {cls:'conc',color:'#c8c45c',label:'Concentration'},
+  Expertise:      {cls:'exp', color:'#9a7ad4',label:'Expertise'},
+};
+const ALL_STATS=Object.keys(STAT_META);
+const ABBR={Power:'POW',Precision:'PREC',Vitality:'VIT',Ferocity:'FER',Toughness:'TOUGH',ConditionDamage:'COND',HealingPower:'HEAL',Concentration:'CONC',Expertise:'EXP'};
+
+// avail flags: omit key or true = available, false = not available.
+// 'back' is checked separately from 'trinket'.
+const PREFIXES={
+  '— none —':       {n:0,s:{}},
+  "Apothecary's":   {n:3,s:{HealingPower:'maj',Toughness:'min',ConditionDamage:'min'}},
+  "Assassin's":     {n:3,s:{Precision:'maj',Power:'min',Ferocity:'min'}},
+  "Berserker's":    {n:3,s:{Power:'maj',Precision:'min',Ferocity:'min'}},
+  "Bringer's":      {n:3,s:{Expertise:'maj',Precision:'min',Vitality:'min'}},
+  "Carrion":        {n:3,s:{ConditionDamage:'maj',Power:'min',Vitality:'min'}},
+  "Cavalier's":     {n:3,s:{Toughness:'maj',Power:'min',Ferocity:'min'}},
+  "Cleric's":       {n:3,s:{HealingPower:'maj',Power:'min',Toughness:'min'}},
+  "Commander's":    {n:4,s:{Power:'maj',Precision:'maj',Toughness:'min',Concentration:'min'}},
+  "Crusader":       {n:4,s:{Power:'maj',Toughness:'maj',Ferocity:'min',HealingPower:'min'}},
+  "Demolisher":     {n:4,s:{Power:'maj',Precision:'maj',Toughness:'min',Ferocity:'min'}},
+  "Dire":           {n:3,s:{ConditionDamage:'maj',Toughness:'min',Vitality:'min'}},
+  "Diviner's":      {n:4,s:{Power:'maj',Concentration:'maj',Precision:'min',Ferocity:'min'}},
+  "Dragon's":       {n:4,s:{Power:'maj',Ferocity:'maj',Precision:'min',Vitality:'min'}},
+  "Forsaken":       {n:3,s:{Power:'maj',Toughness:'min',HealingPower:'min'},avail:{armor:false,trinket:false,weapon:true,back:false}},
+  "Giver's":        {n:3,s:{Toughness:'maj',HealingPower:'min',Concentration:'min'}},
+  "Grieving":       {n:4,s:{Power:'maj',ConditionDamage:'maj',Precision:'min',Ferocity:'min'}},
+  "Harrier's":      {n:3,s:{Power:'maj',HealingPower:'min',Concentration:'min'}},
+  "Knight's":       {n:3,s:{Toughness:'maj',Power:'min',Precision:'min'}},
+  "Magi's":         {n:3,s:{HealingPower:'maj',Precision:'min',Vitality:'min'}},
+  "Marauder":       {n:4,s:{Power:'maj',Precision:'maj',Vitality:'min',Ferocity:'min'}},
+  "Marshal's":      {n:4,s:{Power:'maj',HealingPower:'maj',Precision:'min',ConditionDamage:'min'}},
+  "Minstrel's":     {n:4,s:{Toughness:'maj',HealingPower:'maj',Vitality:'min',Concentration:'min'}},
+  "Nomad's":        {n:3,s:{Toughness:'maj',Vitality:'min',HealingPower:'min'}},
+  "Plaguedoctor's": {n:4,s:{Vitality:'maj',ConditionDamage:'maj',HealingPower:'min',Concentration:'min'}},
+  "Rabid":          {n:3,s:{ConditionDamage:'maj',Precision:'min',Toughness:'min'}},
+  "Rampager's":     {n:3,s:{Precision:'maj',Power:'min',ConditionDamage:'min'}},
+  "Ritualist's":    {n:4,s:{Vitality:'maj',ConditionDamage:'maj',Concentration:'min',Expertise:'min'}},
+  "Seraph":         {n:4,s:{Precision:'maj',ConditionDamage:'maj',Concentration:'min',HealingPower:'min'},avail:{back:false}},
+  "Sentinel's":     {n:3,s:{Vitality:'maj',Power:'min',Toughness:'min'}},
+  "Settler's":      {n:3,s:{Toughness:'maj',ConditionDamage:'min',HealingPower:'min'}},
+  "Shaman's":       {n:3,s:{Vitality:'maj',ConditionDamage:'min',HealingPower:'min'}},
+  "Sinister":       {n:3,s:{ConditionDamage:'maj',Power:'min',Precision:'min'}},
+  "Soldier's":      {n:3,s:{Power:'maj',Toughness:'min',Vitality:'min'}},
+  "Trailblazer's":  {n:4,s:{Toughness:'maj',ConditionDamage:'maj',Vitality:'min',Expertise:'min'}},
+  "Valkyrie":       {n:3,s:{Power:'maj',Vitality:'min',Ferocity:'min'}},
+  "Vigilant":       {n:4,s:{Power:'maj',Toughness:'maj',Concentration:'min',Expertise:'min'}},
+  "Viper's":        {n:4,s:{Power:'maj',ConditionDamage:'maj',Precision:'min',Expertise:'min'}},
+  "Wanderer's":     {n:4,s:{Power:'maj',Vitality:'maj',Toughness:'min',Concentration:'min'}},
+  "Zealot's":       {n:3,s:{Power:'maj',Precision:'min',HealingPower:'min'}},
+  "Celestial":      {n:9,s:{Power:'maj',Precision:'maj',Toughness:'maj',Vitality:'maj',Ferocity:'maj',HealingPower:'maj',ConditionDamage:'maj',Concentration:'maj',Expertise:'maj'}},
+};
+const REAL_PREFIXES=Object.keys(PREFIXES)
+  .filter(k=>k!=='— none —')
+  .sort((a,b)=>a.replace(/[^a-zA-Z]/g,'').localeCompare(b.replace(/[^a-zA-Z]/g,'')));
+
+// ── HELPERS ──
+function prefixAvailFor(name,slotKey){
+  const p=PREFIXES[name];if(!p||!p.avail)return true;
+  const av=p.avail;
+  if(slotKey==='back')return av.back!==false;
+  const t=SLOTS[slotKey].type;
+  if(t==='weapon')return av.weapon!==false;
+  if(t==='trinket')return av.trinket!==false;
+  return av.armor!==false;
+}
+function prefixOptsFor(selected,slotKey){
+  const none=`<option value="— none —"${selected==='— none —'?' selected':''}>— none —</option>`;
+  const rest=REAL_PREFIXES.filter(n=>prefixAvailFor(n,slotKey)).map(p=>`<option value="${p}"${selected===p?' selected':''}>${p}</option>`).join('');
+  return none+rest;
+}
+function getSlotStats(slotKey,prefixName){
+  const p=PREFIXES[prefixName];if(!p||p.n===0)return{};
+  if(!prefixAvailFor(prefixName,slotKey))return{};
+  const slot=SLOTS[slotKey];
+  let valKey,rar;
+  if(slot.type==='weapon'){rar=rarity[slotKey]||'ascended';valKey=weaponHands[slotKey]==='2h'?'wep_2h':'wep_1h';}
+  else{rar=rarity[slotKey]||'ascended';valKey=slotKey;}
+  const vals=STAT_VALUES[valKey][rar];
+  const out={};
+  if(p.n===9){for(const s of Object.keys(p.s))out[s]=vals.n9;}
+  else{const mv=p.n===4?vals.n4:vals.n3;for(const[s,r]of Object.entries(p.s))out[s]=(out[s]||0)+(r==='maj'?mv.maj:mv.min);}
+  return out;
+}
+function addStats(a,b){const r={...a};for(const[k,v]of Object.entries(b))r[k]=(r[k]||0)+v;return r;}
+function totalFor(pm){let t={};for(const k of SLOT_KEYS)t=addStats(t,getSlotStats(k,pm[k]));return t;}
+function deviation(a,b){let d=0;const ks=new Set([...Object.keys(a),...Object.keys(b)]);for(const k of ks)d+=Math.abs((a[k]||0)-(b[k]||0));return d;}
+function gradeScore(s){
+  if(s===0)  return{text:'Perfect',      bg:'rgba(78,200,122,.2)', color:'#4ec87a'};
+  if(s<=100) return{text:'Near-perfect', bg:'rgba(78,200,122,.15)',color:'#4ec87a'};
+  if(s<=350) return{text:'Excellent',    bg:'rgba(78,200,122,.1)', color:'#78c89a'};
+  if(s<=700) return{text:'Very close',   bg:'rgba(201,168,76,.12)',color:'#c9a84c'};
+  if(s<=1100)return{text:'Close',        bg:'rgba(201,168,76,.08)',color:'#a88c3e'};
+  if(s<=1600)return{text:'Moderate',     bg:'rgba(212,114,74,.12)',color:'#c87858'};
+  return          {text:'Far off',       bg:'rgba(224,80,80,.12)', color:'#e06060'};
+}
+
+// ── TOLERANCE ──
+const tolerances={};for(const s of ALL_STATS)tolerances[s]={lo:null,hi:null};
+function tolBounds(stat,tgtTotal){
+  const t=tolerances[stat],tv=tgtTotal[stat]||0;
+  return{lo:t.lo!==null?Math.round(tv*t.lo/100):null,hi:t.hi!==null?Math.round(tv*t.hi/100):null};
+}
+function passesTol(total,tgtTotal){
+  for(const stat of ALL_STATS){
+    const t=tolerances[stat];if(t.lo===null&&t.hi===null)continue;
+    const dev=(total[stat]||0)-(tgtTotal[stat]||0);
+    const{lo,hi}=tolBounds(stat,tgtTotal);
+    if(lo!==null&&dev<lo)return false;if(hi!==null&&dev>hi)return false;
+  }
+  return true;
+}
+function statTolStatus(stat,dev,tgtTotal){
+  const t=tolerances[stat];if(t.lo===null&&t.hi===null)return null;
+  const{lo,hi}=tolBounds(stat,tgtTotal);
+  if(lo!==null&&dev<lo)return false;if(hi!==null&&dev>hi)return false;return true;
+}
+function hasAnyTol(){return ALL_STATS.some(s=>tolerances[s].lo!==null||tolerances[s].hi!==null);}
+function setTol(stat,side,val){
+  const raw=val.trim().replace(/^\+/,'');
+  const n=raw===''?null:parseFloat(raw);
+  tolerances[stat][side]=(n===null||isNaN(n))?null:n;
+  document.getElementById(`tol-${side}-${stat}`)?.classList.toggle('set',tolerances[stat][side]!==null);
+  update();
+}
+
+// ── STATE ──
+const rarity={}; // per-slot: rarity[slotKey] = 'ascended'|'exotic'
+const weaponHands={wep1:'1h',wep2:'1h',wep3:'1h',wep4:'1h'};
+const cur={prefixes:{},locked:{}};
+const tgt={prefixes:{}};
+function initState(){
+  for(const k of SLOT_KEYS){cur.prefixes[k]='— none —';cur.locked[k]=true;tgt.prefixes[k]='— none —';rarity[k]='ascended';}
+}
+
+// ── CARD BUILDERS ──
+function buildCurCard(k){
+  const slot=SLOTS[k],locked=cur.locked[k],isWep=slot.type==='weapon';
+  const card=document.createElement('div');
+  card.className='slot-card'+(locked?' is-locked':'');card.id=`cur-card-${k}`;
+  const opts=prefixOptsFor(cur.prefixes[k],k);
+  const rar=rarity[k]||'ascended';
+  const rarHtml=`<div class="rar-btns" id="rar-${k}">
+    <button class="rar-btn${rar==='ascended'?' active':''}" onclick="setSlotRarity('${k}','ascended',this)">Asc</button>
+    <button class="rar-btn${rar==='exotic'?' active':''}" onclick="setSlotRarity('${k}','exotic',this)">Exo</button>
+  </div>`;
+  const handHtml=isWep?`<div class="hand-btns" id="hand-${k}">
+    <button class="hbtn${weaponHands[k]==='1h'?' active':''}" onclick="setHand('${k}','1h',this)">1H</button>
+    <button class="hbtn${weaponHands[k]==='2h'?' active':''}" onclick="setHand('${k}','2h',this)">2H</button>
+  </div>`:'';
+  card.innerHTML=`<div class="card-top"><span class="slot-label">${slot.label}</span>
+    <label class="lock-wrap"><input type="checkbox" id="cur-lock-${k}" ${locked?'checked':''} onchange="toggleLock('${k}',this.checked)">
+    <div class="lock-track"><div class="lock-thumb"></div></div>
+    <span class="lock-text" id="cur-lt-${k}">${locked?'locked':'free'}</span></label></div>
+    ${rarHtml}${handHtml}<select class="slot-select" id="cur-sel-${k}" onchange="setCurPrefix('${k}',this.value)">${opts}</select>
+    <div class="stat-pills" id="cur-pills-${k}"></div>`;
+  return card;
+}
+function buildTgtCard(k){
+  const slot=SLOTS[k],isWep=slot.type==='weapon';
+  const card=document.createElement('div');
+  card.className='slot-card';card.id=`tgt-card-${k}`;
+  const opts=prefixOptsFor(tgt.prefixes[k],k);
+  const handLabel=isWep?`<div style="font-size:9px;color:var(--muted2);margin-bottom:4px;" id="tgt-hlbl-${k}">${weaponHands[k]==='2h'?'2H':'1H'} weapon</div>`:'';
+  card.innerHTML=`<div class="card-top"><span class="slot-label">${slot.label}</span></div>
+    ${handLabel}<select class="slot-select" id="tgt-sel-${k}" onchange="setTgtPrefix('${k}',this.value)">${opts}</select>
+    <div class="stat-pills" id="tgt-pills-${k}"></div>`;
+  return card;
+}
+function buildAllCards(){
+  const groups={armor:[],trinkets:[],weapons:[]};
+  for(const[k,s]of Object.entries(SLOTS))groups[s.group].push(k);
+  for(const[g,keys]of Object.entries(groups)){
+    const cg=document.getElementById(`cur-grid-${g}`),tg=document.getElementById(`tgt-grid-${g}`);
+    if(!cg||!tg)continue;
+    cg.innerHTML='';tg.innerHTML='';
+    for(const k of keys){cg.appendChild(buildCurCard(k));tg.appendChild(buildTgtCard(k));}
+  }
+  const psel=document.getElementById('target-preset');
+  psel.innerHTML=`<option value="">set all to…</option>`+REAL_PREFIXES.map(k=>`<option value="${k}">${k}</option>`).join('');
+  const cpsel=document.getElementById('current-preset');
+  if(cpsel)cpsel.innerHTML=`<option value="">set all to…</option>`+REAL_PREFIXES.map(k=>`<option value="${k}">${k}</option>`).join('');
+}
+
+// ── PILLS ──
+function pillsHTML(stats){
+  const ks=ALL_STATS.filter(s=>stats[s]>0);
+  if(!ks.length)return'<span class="pill none">none</span>';
+  return ks.map(s=>`<span class="pill ${STAT_META[s].cls}">${ABBR[s]} +${stats[s]}</span>`).join('');
+}
+function updateAllPills(){
+  for(const k of SLOT_KEYS){
+    const ce=document.getElementById(`cur-pills-${k}`),te=document.getElementById(`tgt-pills-${k}`);
+    if(ce)ce.innerHTML=pillsHTML(getSlotStats(k,cur.prefixes[k]));
+    if(te)te.innerHTML=pillsHTML(getSlotStats(k,tgt.prefixes[k]));
+  }
+}
+
+// ── TOLERANCE UI ──
+let _lastTolKey='';
+function buildTolGrid(tgtTotal){
+  const stats=ALL_STATS.filter(s=>(tgtTotal[s]||0)>0);
+  const keyStr=stats.join(',');
+  const grid=document.getElementById('tol-grid');
+  if(!stats.length){_lastTolKey='';grid.innerHTML='<div class="tol-empty">Set a target build to enable per-stat tolerances.</div>';return;}
+  if(keyStr!==_lastTolKey){
+    _lastTolKey=keyStr;
+    grid.innerHTML=stats.map(stat=>{
+      const m=STAT_META[stat],t=tolerances[stat];
+      return`<div class="tol-row">
+        <div class="tol-stat"><div class="tol-dot" style="background:${m.color}"></div><span class="tol-name">${m.label}</span></div>
+        <div class="tol-wrap"><input class="tol-input${t.lo!==null?' set':''}" id="tol-lo-${stat}" type="text" inputmode="decimal" placeholder="−∞" value="${t.lo!==null?t.lo:''}" onchange="setTol('${stat}','lo',this.value)"><span class="tol-pct">%</span></div>
+        <span class="tol-sep">to</span>
+        <div class="tol-wrap"><input class="tol-input${t.hi!==null?' set':''}" id="tol-hi-${stat}" type="text" inputmode="decimal" placeholder="+∞" value="${t.hi!==null?t.hi:''}" onchange="setTol('${stat}','hi',this.value)"><span class="tol-pct">%</span></div>
+        <div id="tol-dot-${stat}" class="tol-status-dot"></div>
+      </div>`;
+    }).join('');
+  }
+}
+function updateTolDots(tgtTotal,curTotal){
+  for(const stat of ALL_STATS.filter(s=>(tgtTotal[s]||0)>0)){
+    const el=document.getElementById(`tol-dot-${stat}`);if(!el)continue;
+    const t=tolerances[stat];
+    if(t.lo===null&&t.hi===null){el.style.background='transparent';continue;}
+    const dev=(curTotal[stat]||0)-(tgtTotal[stat]||0);
+    const pass=statTolStatus(stat,dev,tgtTotal);
+    el.style.background=pass===null?'transparent':pass?'var(--good)':'var(--bad)';
+  }
+}
+
+// ── MAIN UPDATE ──
+function update(){
+  updateAllPills();
+  let lockedTotal={},freeTotal={};
+  for(const k of SLOT_KEYS){
+    const s=getSlotStats(k,cur.prefixes[k]);
+    if(cur.locked[k])lockedTotal=addStats(lockedTotal,s);
+    else             freeTotal  =addStats(freeTotal,  s);
+  }
+  const curTotal=addStats(lockedTotal,freeTotal);
+  const tgtTotal=totalFor(tgt.prefixes);
+  const score=deviation(curTotal,tgtTotal);
+  const g=gradeScore(score);
+  const sn=document.getElementById('score-num');sn.textContent=score;sn.style.color=g.color;
+  const sg=document.getElementById('score-grade');sg.textContent=g.text;sg.style.background=g.bg;sg.style.color=g.color;
+  buildTolGrid(tgtTotal);updateTolDots(tgtTotal,curTotal);
+
+  const allKeys=new Set([...ALL_STATS.filter(s=>(curTotal[s]||0)>0),...ALL_STATS.filter(s=>(tgtTotal[s]||0)>0)]);
+  let html='';
+  for(const stat of ALL_STATS){
+    if(!allKeys.has(stat))continue;
+    const tot=curTotal[stat]||0,t=tgtTotal[stat]||0,lck=lockedTotal[stat]||0,fr=freeTotal[stat]||0;
+    const dev=tot-t,devStr=dev===0?'±0':(dev>0?`+${dev}`:`${dev}`);
+    const devColor=dev===0?'var(--good)':(dev>0?'var(--over)':'var(--under)');
+    const m=STAT_META[stat];
+    const pct=t>0?Math.min(120,Math.round(tot/t*100)):0;
+    const barW=Math.min(100,pct),isOver=pct>100;
+    const barColor=isOver?'var(--over)':(pct>=95?'var(--good)':pct>=70?'var(--warn)':'var(--under)');
+    const pass=t?statTolStatus(stat,dev,tgtTotal):null;
+    const tolMark=pass===true?`<span class="tol-mark" style="color:var(--good)">✓</span>`:pass===false?`<span class="tol-mark" style="color:var(--bad)">✗</span>`:'';
+    html+=`<tr>
+      <td><div class="stat-name-cell"><div class="stat-dot" style="background:${m.color}"></div><span class="stat-nm">${m.label}</span></div></td>
+      <td class="mono">${lck||'—'}</td>
+      <td class="mono" style="color:${m.color}">${fr>0?'+'+fr:(fr===0?'—':fr)}</td>
+      <td class="mono bright">${tot}</td>
+      <td class="mono">${t||'—'}</td>
+      <td class="dev" style="color:${devColor}">${t?devStr:'—'}</td>
+      <td class="bar-td">${t?`<div class="bar-bg"><div class="bar-fg" style="width:${barW}%;background:${barColor}"></div></div>`:''}</td>
+      <td class="tol-td">${tolMark}</td>
+    </tr>`;
+  }
+  document.getElementById('comp-body').innerHTML=html;
+
+  const anyTol=hasAnyTol();
+  const fsEl=document.getElementById('filter-status');
+  if(!anyTol)fsEl.innerHTML='<div class="filter-info none">No tolerance constraints active — all combinations eligible.</div>';
+  else if(passesTol(curTotal,tgtTotal))fsEl.innerHTML='<div class="filter-info ok">Current build passes all tolerance constraints.</div>';
+  else fsEl.innerHTML='<div class="filter-info bad">Current build fails one or more tolerance constraints.</div>';
+
+  const freeCount=SLOT_KEYS.filter(k=>!cur.locked[k]).length;
+  const btn=document.getElementById('find-btn');
+  btn.disabled=freeCount===0;
+  btn.textContent=freeCount===0?'All slots are locked':`Compute optimal for ${freeCount} free slot${freeCount>1?'s':''} ↗`;
+}
+
+// ── CONTROLS ──
+function setCurPrefix(k,val){cur.prefixes[k]=val;update();}
+function setTgtPrefix(k,val){tgt.prefixes[k]=val;update();}
+function toggleLock(k,locked){
+  cur.locked[k]=locked;
+  document.getElementById(`cur-card-${k}`)?.classList.toggle('is-locked',locked);
+  const lt=document.getElementById(`cur-lt-${k}`);if(lt)lt.textContent=locked?'locked':'free';
+  update();
+}
+function lockGroup(group,lock){
+  for(const[k,s]of Object.entries(SLOTS)){
+    if(s.group!==group)continue;
+    cur.locked[k]=lock;
+    document.getElementById(`cur-card-${k}`)?.classList.toggle('is-locked',lock);
+    const cb=document.getElementById(`cur-lock-${k}`);if(cb)cb.checked=lock;
+    const lt=document.getElementById(`cur-lt-${k}`);if(lt)lt.textContent=lock?'locked':'free';
+  }
+  update();
+}
+function setSlotRarity(k,val,btn){
+  rarity[k]=val;
+  const bg=document.getElementById(`rar-${k}`);
+  if(bg)bg.querySelectorAll('.rar-btn').forEach(b=>b.classList.toggle('active',b===btn));
+  update();
+}
+function setHand(k,hand,btn){
+  weaponHands[k]=hand;
+  const bg=document.getElementById(`hand-${k}`);
+  if(bg)bg.querySelectorAll('.hbtn').forEach(b=>b.classList.toggle('active',b===btn));
+  const tl=document.getElementById(`tgt-hlbl-${k}`);
+  if(tl)tl.textContent=(hand==='2h'?'2H':'1H')+' weapon';
+  update();
+}
+function safePrefix(k,name){return prefixAvailFor(name,k)?name:'— none —';}
+function applyCurrentPreset(name){
+  if(!name)return;
+  for(const k of SLOT_KEYS){const v=safePrefix(k,name);cur.prefixes[k]=v;const s=document.getElementById(`cur-sel-${k}`);if(s)s.value=v;}
+  document.getElementById('current-preset').value='';update();
+}
+function applyTargetPreset(name){
+  if(!name)return;
+  for(const k of SLOT_KEYS){const v=safePrefix(k,name);tgt.prefixes[k]=v;const s=document.getElementById(`tgt-sel-${k}`);if(s)s.value=v;}
+  document.getElementById('target-preset').value='';update();
+}
+function copyGroupToTarget(group){
+  for(const[k,s]of Object.entries(SLOTS)){
+    if(s.group!==group)continue;
+    tgt.prefixes[k]=cur.prefixes[k];
+    const sel=document.getElementById(`tgt-sel-${k}`);if(sel)sel.value=cur.prefixes[k];
+  }
+  update();
+}
+
+// ── FIND BEST ──
+function evalAsgn(asgn,lockedStats,tgtTotal){
+  let t={...lockedStats};
+  for(const[k,n]of Object.entries(asgn)){const s=getSlotStats(k,n);for(const[stat,v]of Object.entries(s))t[stat]=(t[stat]||0)+v;}
+  return{score:deviation(t,tgtTotal),total:t};
+}
+function penEval(asgn,lockedStats,tgtTotal){
+  const{score,total}=evalAsgn(asgn,lockedStats,tgtTotal);
+  if(!hasAnyTol()||passesTol(total,tgtTotal))return score;
+  let pen=0;
+  for(const stat of ALL_STATS){
+    const t=tolerances[stat];if(t.lo===null&&t.hi===null)continue;
+    const dev=(total[stat]||0)-(tgtTotal[stat]||0);
+    const{lo,hi}=tolBounds(stat,tgtTotal);
+    if(lo!==null&&dev<lo)pen+=(lo-dev)*100;
+    if(hi!==null&&dev>hi)pen+=(dev-hi)*100;
+  }
+  return score+pen;
+}
+function findBest(){
+  const freeSlots=SLOT_KEYS.filter(k=>!cur.locked[k]);
+  if(!freeSlots.length)return;
+  const resultsEl=document.getElementById('best-results');
+  resultsEl.innerHTML='<div class="best-status">Computing…</div>';
+  const tgtTotal=totalFor(tgt.prefixes);
+  let lockedStats={};
+  for(const k of SLOT_KEYS.filter(k=>cur.locked[k]))lockedStats=addStats(lockedStats,getSlotStats(k,cur.prefixes[k]));
+  const slotNames={};
+  for(const k of freeSlots)slotNames[k]=REAL_PREFIXES.filter(n=>prefixAvailFor(n,k));
+  const anyTol=hasAnyTol();
+
+  setTimeout(()=>{
+    let results=[];
+    const tryAdd=(asgn)=>{
+      const{score,total}=evalAsgn(asgn,lockedStats,tgtTotal);
+      if(!anyTol||passesTol(total,tgtTotal))results.push({assignment:{...asgn},score});
+    };
+
+    if(freeSlots.length<=3){
+      const rec=(idx,asgn)=>{
+        if(idx===freeSlots.length){tryAdd(asgn);return;}
+        for(const n of slotNames[freeSlots[idx]]){asgn[freeSlots[idx]]=n;rec(idx+1,asgn);}
+      };
+      rec(0,{});
+    }else if(freeSlots.length===4){
+      for(const a of slotNames[freeSlots[0]])for(const b of slotNames[freeSlots[1]])for(const c of slotNames[freeSlots[2]])for(const d of slotNames[freeSlots[3]]){
+        tryAdd({[freeSlots[0]]:a,[freeSlots[1]]:b,[freeSlots[2]]:c,[freeSlots[3]]:d});
+      }
+    }else{
+      const hillClimb=(start)=>{
+        let c={...start},best=penEval(c,lockedStats,tgtTotal),improved=true;
+        while(improved){
+          improved=false;
+          for(const slot of freeSlots)for(const n of slotNames[slot]){
+            const test={...c,[slot]:n},sc=penEval(test,lockedStats,tgtTotal);
+            if(sc<best){best=sc;c[slot]=n;improved=true;}
+          }
+        }
+        const{score,total}=evalAsgn(c,lockedStats,tgtTotal);
+        if(!anyTol||passesTol(total,tgtTotal))results.push({assignment:c,score});
+      };
+      for(let i=0;i<80;i++){const s={};for(const sl of freeSlots)s[sl]=slotNames[sl][Math.floor(Math.random()*slotNames[sl].length)];hillClimb(s);}
+      for(const n of REAL_PREFIXES){const s={};for(const sl of freeSlots)s[sl]=prefixAvailFor(n,sl)?n:slotNames[sl][0];hillClimb(s);}
+      const seen0=new Set();
+      results=results.filter(r=>{const k=freeSlots.map(s=>r.assignment[s]).join('|');if(seen0.has(k))return false;seen0.add(k);return true;});
+    }
+
+    results.sort((a,b)=>a.score-b.score);
+    const seen=new Set();const top=[];
+    for(const r of results){
+      const k=freeSlots.map(s=>r.assignment[s]).sort().join('||');
+      if(!seen.has(k)){seen.add(k);top.push(r);}
+      if(top.length>=10)break;
+    }
+    const algo=freeSlots.length>4?' · near-optimal':' · exact';
+    const tolNote=anyTol?' · tolerance-filtered':'';
+    if(!top.length){
+      resultsEl.innerHTML=anyTol
+        ?'<div class="best-status">No combinations satisfy the current tolerances. Try relaxing your ranges.</div>'
+        :'<div class="best-status">No results found.</div>';
+      return;
+    }
+    _combosCache=top.map(r=>r.assignment);
+    let html=`<div style="margin:8px 0 5px;font-size:9px;color:var(--muted);font-style:italic;">${top.length} result${top.length>1?"s":""} · click to apply${algo}${tolNote}</div>`;
+    for(const[i,r]of top.entries()){
+      const g=gradeScore(r.score);
+      const tags=freeSlots.map(s=>`<span class="combo-tag free">${SLOTS[s].label.replace(' Item','')}: ${r.assignment[s]}</span>`).join('');
+      html+=`<div class="combo-row" onclick="applyCombo(${i})">
+        <span class="combo-rank">${i+1}</span>
+        <div class="combo-names">${tags}</div>
+        <span class="combo-score" style="color:${g.color}">${r.score}</span>
+      </div>`;
+    }
+    resultsEl.innerHTML=html;
+  },30);
+}
+
+let _combosCache=[];
+function applyCombo(idx){
+  const asgn=_combosCache[idx];if(!asgn)return;
+  for(const[k,n]of Object.entries(asgn)){cur.prefixes[k]=n;const sel=document.getElementById(`cur-sel-${k}`);if(sel)sel.value=n;}
+  update();
+}
+
+initState();buildAllCards();update();
+</script>
+</body>
+</html>
